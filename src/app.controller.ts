@@ -9,4 +9,9 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  @Get('/testRoute')
+  getTestRouteContent(): string {
+    return 'This is a test Route. Congratulations you just created your first route!!! :D';
+  }
 }
