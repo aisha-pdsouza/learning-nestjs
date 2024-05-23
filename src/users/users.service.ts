@@ -70,8 +70,6 @@ export class UsersService {
             }
             return user
         });
-        console.log(this.users)
-
         return this.getUser(id);
     }
 
