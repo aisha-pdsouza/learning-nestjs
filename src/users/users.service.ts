@@ -4,56 +4,40 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/users.schema';
 import * as mongoose from 'mongoose';
+import { UsersSettings } from './schemas/users-settings.schema';
 
 @Injectable()
 export class UsersService {
-    private users = [
-        {
-            id: 1,
-            name: "John Smith",
-            email: "john.smith@gmail.com",
-            role: "ADMIN"
-        },
-        {
-            id: 2,
-            name: "Rachel Green",
-            email: "rachel.green@gmail.com",
-            role: "ENGINEER"
-        },
-        {
-            id: 3,
-            name: "Mark Smith",
-            email: "mark.smith@gmail.com",
-            role: "ADMIN"
-        },
-        {
-            id: 4,
-            name: "Clara Nots",
-            email: "clara.nots@gmail.com",
-            role: "INTERN"
-        },
-        {
-            id: 5,
-            name: "Hannah Montana",
-            email: "hannah.montana@gmail.com",
-            role: "ENGINEER"
-        }
-    ]
 
     constructor(
-        @InjectModel(User.name) private userModel: mongoose.Model<User>) {}
+        @InjectModel(User.name) private userModel: mongoose.Model<User>,
+        @InjectModel(UsersSettings.name) private userSettingsModel: mongoose.Model<UsersSettings>) {}
 
     getAllUsers()
     {
-        return this.userModel.find();
+        return this.userModel.find().populate('settings'); //populate is used to populate actual values of the nested schema instead of its Id
     }
 
     getUserById(id: string)
     {
-        return this.userModel.findById(id);
+        return this.userModel.findById(id).populate('settings'); //populate is used to populate actual values of the nested schema instead of its Id
     }
-    createUser(createUserDto: CreateUserDto)
+    async createUser({settings, ...createUserDto }: CreateUserDto) //separating settings object from rest of the properties cause we need to create settings document separately before adding the ref to our UsersSchema
     {
+        if(settings)
+        {
+            const newUserSettings = new this.userSettingsModel(settings);
+            const newSettings = await newUserSettings.save();
+
+            const newUser = new this.userModel(
+                {
+                    ...createUserDto,
+                    settings: newSettings._id
+                }
+            );
+
+            return newUser.save();
+        }
         const newUser = new this.userModel(createUserDto);
         return newUser.save();
     }
