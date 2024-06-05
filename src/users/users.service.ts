@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { User } from './schemas/users.schema';
+import * as mongoose from 'mongoose';
 
 @Injectable()
 export class UsersService {
@@ -37,56 +40,31 @@ export class UsersService {
         }
     ]
 
-    getAllUsers(role?: 'ADMIN' | 'ENGINEER' | 'INTERN')
+    constructor(
+        @InjectModel(User.name) private userModel: mongoose.Model<User>) {}
+
+    getAllUsers()
     {
-        if(role)
-        {
-            const rolesArray = this.users.filter(user=>user.role === role);
-            if(rolesArray.length === 0 )
-            {
-                throw new NotFoundException('Role not found!')
-            }
-            return rolesArray;
-        }
-        return this.users;
+        return this.userModel.find();
     }
 
-    getUser(id: number)
+    getUserById(id: string)
     {
-        const user = this.users.find(user=>user.id === id);
-        if(!user)
-            throw new NotFoundException('User not found!!');
-        return this.users.find(user=>user.id === id)
+        return this.userModel.findById(id);
     }
-
     createUser(createUserDto: CreateUserDto)
     {
-        const userByHighestId = [...this.users].sort((a,b)=>b.id-a.id);
-        const newUser = {
-            id: userByHighestId[0].id + 1,
-            ...createUserDto
-        }
-        this.users.push(newUser);
-        return newUser;
+        const newUser = new this.userModel(createUserDto);
+        return newUser.save();
     }
 
-    updateUser(id: number, updatedUserDto: UpdateUserDto)
+    updateUser(id: string, updatedUserDto: UpdateUserDto)
     {
-        this.users = this.users.map((user)=>
-        {
-            if(user.id === id)
-            {
-                return { ...user, ...updatedUserDto } //overrider users values with updatedUser
-            }
-            return user
-        });
-        return this.getUser(id);
+        return this.userModel.findByIdAndUpdate(id, updatedUserDto, {new: true});
     }
 
-    delete(id: number)
+    delete(id: string)
     {
-        const userToRemove = this.getUser(id);
-        this.users = this.users.filter(user=>user.id !== id);
-        return userToRemove;
+        return this.userModel.findByIdAndDelete(id);
     }
 }

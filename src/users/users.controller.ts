@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, Param, ParseIntPipe, Patch, Post, Query, ValidationPipe } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import  * as mongoose  from 'mongoose';
 
 @Controller('users')
 export class UsersController {
@@ -10,15 +11,20 @@ export class UsersController {
     {}
 
     @Get() // /users or /users?role=ADMIN
-    getAllUsers(@Query('role') role?: 'INTERN'| 'ENGINEER'| 'ADMIN')
+    getAllUsers()
     {
-        return this.userService.getAllUsers(role);
+        return this.userService.getAllUsers();
     }
 
     @Get(':id') // /users/1
-    getUser(@Param('id', ParseIntPipe) id: number)
+    async getUserById(@Param('id') id: string)
     {
-        return  this.userService.getUser(id);
+        const isValidId = mongoose.Types.ObjectId.isValid(id);
+        if(!isValidId) throw new HttpException('User not found!', 404);
+        const findUser = await this.userService.getUserById(id);
+        if(!findUser)
+            return new HttpException("User not found!", 404);
+        return findUser;
     }
 
     @Post('create') // /users/create
@@ -28,14 +34,24 @@ export class UsersController {
     }
 
     @Patch(':id') // /users/8
-    updateUser(@Body(ValidationPipe) updateUserDto: UpdateUserDto, @Param('id', ParseIntPipe) id: number)
+    async updateUser(@Body(ValidationPipe) updateUserDto: UpdateUserDto, @Param('id') id: string)
     {
-        return this.userService.updateUser(id, updateUserDto);
+        const isValidId = mongoose.Types.ObjectId.isValid(id);
+        if(!isValidId) throw new HttpException('Invalid Id', 400);
+        const updatedUser = await this.userService.updateUser(id, updateUserDto);
+        if(!updatedUser)
+            throw new HttpException("User not found!", 404);
+        return updatedUser;
     }
 
     @Delete(':id')  // /users/9
-    deleteUser(@Param('id', ParseIntPipe) id: number)
+    async deleteUser(@Param('id') id: string)
     {
-        return this.userService.delete(id);
+        const isValidId = mongoose.Types.ObjectId.isValid(id);
+        if(!isValidId) throw new HttpException('Invalid Id', 400);
+        const deletedUser = await this.userService.delete(id);
+        if(!deletedUser)
+            throw new HttpException("User not found!", 404);
+        return deletedUser;
     }
 }
