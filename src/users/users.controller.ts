@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpException, Param, ParseIntPipe, Patch, Post, Query, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, NotFoundException, Param, ParseIntPipe, Patch, Post, Query, ValidationPipe } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -23,7 +23,7 @@ export class UsersController {
         if(!isValidId) throw new HttpException('User not found!', 404);
         const findUser = await this.userService.getUserById(id);
         if(!findUser)
-            return new HttpException("User not found!", 404);
+            return new NotFoundException("User not found!");
         return findUser;
     }
 
@@ -40,7 +40,7 @@ export class UsersController {
         if(!isValidId) throw new HttpException('Invalid Id', 400);
         const updatedUser = await this.userService.updateUser(id, updateUserDto);
         if(!updatedUser)
-            throw new HttpException("User not found!", 404);
+            throw new NotFoundException("User not found!");
         return updatedUser;
     }
 
@@ -51,7 +51,7 @@ export class UsersController {
         if(!isValidId) throw new HttpException('Invalid Id', 400);
         const deletedUser = await this.userService.delete(id);
         if(!deletedUser)
-            throw new HttpException("User not found!", 404);
+            throw new NotFoundException("User not found!");
         return deletedUser;
     }
 }
