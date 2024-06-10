@@ -15,12 +15,12 @@ export class UsersService {
 
     getAllUsers()
     {
-        return this.userModel.find().populate('settings'); //populate is used to populate actual values of the nested schema instead of its Id
+        return this.userModel.find().populate(['settings', 'posts']); //populate is used to populate actual values of the nested schema instead of its Id
     }
 
     getUserById(id: string)
     {
-        return this.userModel.findById(id).populate('settings'); //populate is used to populate actual values of the nested schema instead of its Id
+        return this.userModel.findById(id).populate(['settings', 'posts']); //populate is used to populate actual values of the nested schema instead of its Id
     }
     async createUser({settings, ...createUserDto }: CreateUserDto) //separating settings object from rest of the properties cause we need to create settings document separately before adding the ref to our UsersSchema
     {
