@@ -1,10 +1,14 @@
-import { Body, Controller, Delete, Get, HttpException, NotFoundException, Param, ParseIntPipe, Patch, Post, Query, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpException, NotFoundException, Param, ParseIntPipe, Patch, Post, Query, UseFilters, ValidationPipe } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import  * as mongoose  from 'mongoose';
+import { IdException } from 'src/exceptions/id-exception';
+import { IdExceptionFilter } from 'src/exceptions/id-exception.filter';
+import { HttpExceptionFilter } from 'src/exceptions/http-exception.filter';
 
 @Controller('users')
+@UseFilters(HttpExceptionFilter)
 export class UsersController {
 
     constructor(private userService: UsersService)
@@ -25,6 +29,17 @@ export class UsersController {
         if(!findUser)
             return new NotFoundException("User not found!");
         return findUser;
+    }
+
+    @Get('/integer/:id') // /users/1
+    @UseFilters(IdExceptionFilter)
+    async getUserException(@Param('id', ParseIntPipe) id: number)
+    {
+        if(id <= 0)
+        {
+            throw new BadRequestException('Invalid Id');
+        }
+        return { success: true, id };
     }
 
     @Post('create') // /users/create
